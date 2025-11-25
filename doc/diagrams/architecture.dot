@@ -1,0 +1,90 @@
+digraph VoxelCoreArchitecture {
+    rankdir=LR;
+    node [shape=box style="rounded,filled" fillcolor="lightgray" color="gray25" fontname="Helvetica"];
+
+    subgraph cluster_runtime {
+        label="Engine runtime";
+        color="lightblue";
+        style="rounded";
+
+        Engine [label="Engine\n(core singleton)", fillcolor="white"];
+        Mainloop [label="Mainloop\n(frame driver)", fillcolor="white"];
+        EngineController [label="EngineController\n(world/session mgr)", fillcolor="white"];
+        PostRunnables [label="PostRunnables\n(frame-end tasks)", fillcolor="white"];
+        Time [label="Time\n(delta + timing)", fillcolor="white"];
+
+        Engine -> Mainloop [label="run()" color="steelblue4"];
+        Engine -> EngineController [label="create/open worlds" color="steelblue4"];
+        Engine -> PostRunnables [label="postRunnable" color="gray40"];
+        Engine -> Time [label="getTime" color="gray40"];
+    }
+
+    subgraph cluster_frontend {
+        label="Frontend";
+        color="lightyellow";
+        style="rounded";
+
+        WindowControl [label="WindowControl\n(frame pacing)" fillcolor="white"];
+        Window [label="Window\n(GLFW wrapper)" fillcolor="white"];
+        Input [label="Input\n(key/mouse bindings)" fillcolor="white"];
+        GUI [label="GUI\n(in-game UI)" fillcolor="white"];
+        Screen [label="Screen (abstract)" fillcolor="white"];
+        LevelScreen [label="LevelScreen\n(world view + HUD)" fillcolor="white"];
+
+        Engine -> WindowControl [label="initializeClient" color="steelblue4"];
+        WindowControl -> Window [label="creates" color="gray40"];
+        WindowControl -> Input [label="creates" color="gray40"];
+        WindowControl -> GUI [label="creates" color="gray40"];
+        Engine -> Screen [label="setScreen()" color="gray40"];
+        Screen -> LevelScreen [style=dashed color="gray50" label="world-specific"];
+    }
+
+    subgraph cluster_content {
+        label="Content + assets";
+        color="palegreen";
+        style="rounded";
+
+        ContentControl [label="ContentControl\n(loads packs)" fillcolor="white"];
+        Content [label="Content\n(registry)" fillcolor="white"];
+        Assets [label="Assets\n(resource cache)" fillcolor="white"];
+        ResPaths [label="ResPaths\n(resource paths)" fillcolor="white"];
+
+        Engine -> ContentControl [label="load content" color="steelblue4"];
+        ContentControl -> Content [label="build registry" color="gray40"];
+        Engine -> Assets [label="loadAssets()" color="gray40"];
+        Engine -> ResPaths [label="getResPaths()" color="gray40"];
+        Assets -> Content [style=dashed color="gray50" label="IDs + definitions"];
+    }
+
+    subgraph cluster_world {
+        label="World/level";
+        color="mistyrose";
+        style="rounded";
+
+        World [label="World\n(metadata + files)" fillcolor="white"];
+        Level [label="Level\n(chunks + objects)" fillcolor="white"];
+        WorldFiles [label="WorldFiles\n(save I/O)" fillcolor="white"];
+
+        EngineController -> World [label="load/create" color="steelblue4"];
+        World -> Level [label="create()/load()" color="gray40"];
+        World -> WorldFiles [label="uses" color="gray40"];
+        Engine -> Level [label="onWorldOpen" color="gray40"];
+        Level -> LevelScreen [label="screen consumes" color="gray40"];
+    }
+
+    subgraph cluster_services {
+        label="Services";
+        color="thistle";
+        style="rounded";
+
+        Network [label="Network" fillcolor="white"];
+        CommandsInterpreter [label="CommandsInterpreter\n(console)" fillcolor="white"];
+        Editor [label="devtools::Editor\n(builtin editor)" fillcolor="white"];
+        DebuggingServer [label="devtools::DebuggingServer" fillcolor="white"];
+
+        Engine -> Network [color="steelblue4"];
+        Engine -> CommandsInterpreter [color="steelblue4"];
+        Engine -> Editor [color="steelblue4"];
+        Engine -> DebuggingServer [color="steelblue4"];
+    }
+}
